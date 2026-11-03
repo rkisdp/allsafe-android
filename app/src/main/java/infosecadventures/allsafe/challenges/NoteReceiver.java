@@ -37,7 +37,7 @@ public class NoteReceiver extends BroadcastReceiver {
         OkHttpClient okHttpClient = new OkHttpClient.Builder().build();
 
         HttpUrl httpUrl = new HttpUrl.Builder()
-                .scheme("http")
+                .scheme("https")
                 .host(server)
                 .addPathSegment("api")
                 .addPathSegment("v1")
@@ -46,8 +46,6 @@ public class NoteReceiver extends BroadcastReceiver {
                 .addQueryParameter("auth_token", "YWxsc2FmZV9kZXZfYWRtaW5fdG9rZW4=")
                 .addQueryParameter("note", note)
                 .build();
-
-        Log.d("ALLSAFE", httpUrl.toString());
 
         Request request = new Request.Builder()
                 .url(httpUrl)
@@ -62,7 +60,6 @@ public class NoteReceiver extends BroadcastReceiver {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                Log.d("ALLSAFE", Objects.requireNonNull(response.body()).string());
             }
         });
 

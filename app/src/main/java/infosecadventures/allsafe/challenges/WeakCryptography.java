@@ -1,6 +1,7 @@
 package infosecadventures.allsafe.challenges;
 
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,16 +11,20 @@ import android.widget.EditText;
 import androidx.fragment.app.Fragment;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Random;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import infosecadventures.allsafe.R;
@@ -32,14 +37,19 @@ public class WeakCryptography extends Fragment {
     public static String encrypt(String value) {
         try {
             SecretKeySpec secretKeySpec = new SecretKeySpec(KEY.getBytes(StandardCharsets.UTF_8), "AES");
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
-            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
+            byte[] iv = new byte[12];
+            new SecureRandom().nextBytes(iv);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            GCMParameterSpec spec = new GCMParameterSpec(128, iv);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, spec);
             byte[] encrypted = cipher.doFinal(value.getBytes());
-            return new String(encrypted);
+            byte[] combined = ByteBuffer.allocate(iv.length + encrypted.length).put(iv).put(encrypted).array();
+            return Base64.encodeToString(combined, Base64.DEFAULT);
         } catch (
                 NoSuchPaddingException |
                         NoSuchAlgorithmException |
                         InvalidKeyException |
+                        InvalidAlgorithmParameterException |
                         BadPaddingException |
                         IllegalBlockSizeException e) {
             e.printStackTrace();
@@ -61,7 +71,7 @@ public class WeakCryptography extends Fragment {
     }
 
     public static String randomNumber() {
-        Random rnd = new Random();
+        SecureRandom rnd = new SecureRandom();
         int n = rnd.nextInt(100000) + 1;
         return Integer.toString(n);
     }
